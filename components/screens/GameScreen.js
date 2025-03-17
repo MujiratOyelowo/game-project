@@ -139,7 +139,7 @@ export default function GameScreen({ route, navigation }) {
 
   return (
     <ImageBackground 
-      source={require('../../assets/img/bg2.png')}
+      source={require('../../assets/img/Bg2.png')}
       style={styles.background}
     >
       <GameEngine 
