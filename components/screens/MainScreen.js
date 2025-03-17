@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ImageBackground, 
-  Image, 
-  TouchableOpacity 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ImageBackground,
+  Image,
+  TouchableOpacity
 } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -17,7 +17,6 @@ SplashScreen.preventAutoHideAsync();
 
 export default function MainScreen() {
   const navigation = useNavigation();
-
   const [fontsLoaded] = useFonts({
     secondary: require('../../assets/fonts/secondary-font.ttf'),
   });
@@ -25,11 +24,7 @@ export default function MainScreen() {
   // State for the chosen player and modal visibility
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showModal, setShowModal] = useState(false);
-
-  // State for settings modal visibility
   const [showSettingsModal, setShowSettingsModal] = useState(false);
-
-  // State for loading simulation
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
@@ -53,12 +48,12 @@ export default function MainScreen() {
   // Simulate a loading process when PLAY button is pressed
   useEffect(() => {
     let interval;
-    if (isLoading) {
+    if (isLoading && selectedPlayer) { // Only proceed if selectedPlayer is set
       interval = setInterval(() => {
         setLoadingProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval);
-            // Navigate to GameScreen with selected player info when loading is complete
+            console.log('Navigating to GameScreen with selectedPlayer:', selectedPlayer);
             navigation.navigate('GameScreen', { selectedPlayer });
             return 100;
           }
@@ -67,12 +62,12 @@ export default function MainScreen() {
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, [isLoading, selectedPlayer, navigation]);
 
   if (!fontsLoaded) return null;
 
   return (
-    <ImageBackground 
+    <ImageBackground
       source={require('../../assets/img/bg.png')}
       style={styles.background}
     >
@@ -81,8 +76,7 @@ export default function MainScreen() {
         <Text style={styles.topTitle}>WELCOME TO HELL!!</Text>
         <Text style={styles.subtitle}>We hope you get there!!</Text>
 
-        {/* Settings Button as a styled button using Secondary-font */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingsButton}
           onPress={() => setShowSettingsModal(true)}
         >
@@ -92,30 +86,30 @@ export default function MainScreen() {
         {/* Middle Section */}
         <Text style={styles.chooseTitle}>CHOOSE YOUR WARRIOR</Text>
         <View style={styles.playerContainer}>
-          <TouchableOpacity 
-            onPress={() => { 
-              setSelectedPlayer('Player'); 
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedPlayer('Player');
               setShowModal(true);
             }}
           >
-            <Image 
+            <Image
               source={require('../../assets/img/Player.png')}
               style={[
-                styles.playerImage, 
+                styles.playerImage,
                 selectedPlayer === 'Player' && styles.selectedPlayer
               ]}
             />
           </TouchableOpacity>
-          <TouchableOpacity 
-            onPress={() => { 
-              setSelectedPlayer('Player2'); 
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedPlayer('Player2');
               setShowModal(true);
             }}
           >
-            <Image 
+            <Image
               source={require('../../assets/img/Player2.png')}
               style={[
-                styles.playerImage, 
+                styles.playerImage,
                 selectedPlayer === 'Player2' && styles.selectedPlayer
               ]}
             />
@@ -127,7 +121,7 @@ export default function MainScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Selected Warrior</Text>
-              <Image 
+              <Image
                 source={
                   selectedPlayer === 'Player'
                     ? require('../../assets/img/Player.png')
@@ -135,8 +129,8 @@ export default function MainScreen() {
                 }
                 style={styles.modalPlayerImage}
               />
-              <TouchableOpacity 
-                style={styles.modalCloseButton} 
+              <TouchableOpacity
+                style={styles.modalCloseButton}
                 onPress={() => setShowModal(false)}
               >
                 <Text style={styles.modalCloseButtonText}>OK</Text>
@@ -150,9 +144,8 @@ export default function MainScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Settings</Text>
-              {/* Add your settings options here */}
-              <TouchableOpacity 
-                style={styles.modalCloseButton} 
+              <TouchableOpacity
+                style={styles.modalCloseButton}
                 onPress={() => setShowSettingsModal(false)}
               >
                 <Text style={styles.modalCloseButtonText}>Close</Text>
@@ -162,14 +155,16 @@ export default function MainScreen() {
         )}
 
         {/* Bottom Section */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.playButton, 
+            styles.playButton,
             selectedPlayer && styles.playButtonActive
           ]}
           onPress={() => {
             if (selectedPlayer) {
               setIsLoading(true);
+            } else {
+              console.warn('Please select a player before playing!');
             }
           }}
         >
@@ -184,7 +179,7 @@ export default function MainScreen() {
         )}
 
         {/* Go Back Button with arrow (at bottom center) */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
@@ -312,7 +307,7 @@ const styles = StyleSheet.create({
   modalContent: {
     backgroundColor: '#191919',
     width: '50%',
-    padding: 30, 
+    padding: 30,
     borderRadius: 10,
     alignItems: 'center',
   },
