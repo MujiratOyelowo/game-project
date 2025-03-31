@@ -6,8 +6,12 @@ const Player = (world, x, y, selectedPlayer) => {
   const playerWidth = 60;
   const playerHeight = 80;
   const playerBody = Matter.Bodies.rectangle(x, y, playerWidth, playerHeight, {
-    frictionAir: 0.1,
-    label: 'player', // Label for collision detection
+    frictionAir: 0.001,
+    friction: 1,
+    restitution: 0,
+    density: 0.001,
+    inertia: Infinity,
+    label: 'player',
   });
 
   Matter.World.add(world, playerBody);
