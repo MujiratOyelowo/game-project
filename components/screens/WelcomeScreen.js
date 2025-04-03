@@ -1,35 +1,125 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   ImageBackground,
   TouchableOpacity,
-  Modal
+  Modal,
+  Switch
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { Audio } from 'expo-av';
+import { useFocusEffect } from '@react-navigation/native';
 
-// Prevent the splash screen from auto-hiding until fonts are loaded
+// Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
 
 export default function WelcomeScreen() {
   const navigation = useNavigation();
+  const [isReady, setIsReady] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [sound, setSound] = useState();
+  const [showSettings, setShowSettings] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(true);
+
   const [fontsLoaded] = useFonts({
     secondary: require('../../assets/fonts/secondary-font.ttf'),
   });
-  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
-    if (fontsLoaded) {
+    async function prepare() {
+      try {
+        // Pre-load fonts, make any API calls you need to do here
+        await Promise.all([
+          // Add any other async tasks here
+        ]);
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        // Tell the application to render
+        setIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  useEffect(() => {
+    if (isReady && fontsLoaded) {
+      // Hide the splash screen after everything is ready
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [isReady, fontsLoaded]);
 
-  if (!fontsLoaded) {
+  // Load and play background music
+  useEffect(() => {
+    let isMounted = true;
+    
+    async function loadSound() {
+      try {
+        const { sound: soundObject } = await Audio.Sound.createAsync(
+          require('../../assets/sounds/background.wav'),
+          { isLooping: true }
+        );
+        
+        if (isMounted) {
+          setSound(soundObject);
+          if (isSoundEnabled) {
+            await soundObject.playAsync();
+          }
+        }
+      } catch (error) {
+        console.error('Error loading sound:', error);
+      }
+    }
+
+    loadSound();
+
+    return () => {
+      isMounted = false;
+      if (sound) {
+        sound.unloadAsync();
+      }
+    };
+  }, [isSoundEnabled]);
+
+  // Handle sound cleanup when screen loses focus
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        if (sound) {
+          sound.stopAsync();
+        }
+      };
+    }, [sound])
+  );
+
+  const toggleSound = async () => {
+    try {
+      if (sound) {
+        if (isSoundEnabled) {
+          await sound.pauseAsync();
+        } else {
+          await sound.playAsync();
+        }
+        setIsSoundEnabled(!isSoundEnabled);
+      }
+    } catch (error) {
+      console.error('Error toggling sound:', error);
+    }
+  };
+
+  // Navigate to MainScreen with sound state
+  const handlePlayPress = () => {
+    navigation.navigate('MainScreen', { isSoundEnabled });
+  };
+
+  if (!isReady || !fontsLoaded) {
     return null;
   }
 
@@ -40,16 +130,22 @@ export default function WelcomeScreen() {
     >
       {/* Overlay for the welcome screen */}
       <View style={styles.overlay}>
-        <Text style={styles.title}>WAY TO HELL!!</Text>
+        {/* Settings Button - Moved to top right */}
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => setShowSettings(true)}
+        >
+          <Text style={styles.settingsButtonText}>SETTINGS⚙️</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.title}>WELCOME TO HELL!!</Text>
+        <Text style={styles.subtitle}>We hope you get there!!</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => {
-              console.log('Go to GAME pressed');
-              navigation.navigate("MainScreen");
-            }}
+            onPress={handlePlayPress}
           >
-            <Text style={styles.buttonText}>Go to GAME</Text>
+            <Text style={styles.buttonText}>GO TO GAME</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button}
@@ -87,11 +183,11 @@ export default function WelcomeScreen() {
               • Swipe to Move: Slide in the direction you want to go.{'\n'}
               • Avoid the Spikes: Jumping on spikes will cost you two lives (you start with 10 lives).{'\n'}
               • Regain Lives: Land on the regular platforms to regain one life.{'\n'}
-              • Dodge Obstacles: Watch out for fireballs falling from above and devils’ horns coming from the sides.{'\n'}
+              • Dodge Obstacles: Watch out for fireballs falling from above and devils' horns coming from the sides.{'\n'}
               • Controls: Use the left and right buttons to navigate.{'\n'}
-              • Scoring: Earn points every second as long as you’re alive.{'\n'}
-              <Text style={styles.emoji}></Text>☠ Warning: If you fall, you’re sent straight to Hell!{'\n'}
-              <Text style={styles.emoji}>👹</Text>Good luck—we hope you don’t make it!
+              • Scoring: Earn points every second as long as you're alive.{'\n'}
+              <Text style={styles.emoji}></Text>☠ Warning: If you fall, you're sent straight to Hell!{'\n'}
+              <Text style={styles.emoji}>👹</Text>Good luck—we hope you don't make it!
             </Text>
             <TouchableOpacity
               style={styles.closeButton}
@@ -106,6 +202,37 @@ export default function WelcomeScreen() {
         </LinearGradient>
       </Modal>
 
+      {/* Settings Modal */}
+      <Modal
+        visible={showSettings}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Settings</Text>
+            
+            <View style={styles.soundToggleContainer}>
+              <Text style={styles.soundToggleText}>Sound</Text>
+              <Switch
+                value={isSoundEnabled}
+                onValueChange={toggleSound}
+                trackColor={{ false: '#767577', true: '#930606' }}
+                thumbColor={isSoundEnabled ? '#ffff00' : '#f4f3f4'}
+                ios_backgroundColor="#3e3e3e"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowSettings(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <StatusBar style="auto" />
     </ImageBackground>
   );
@@ -118,18 +245,23 @@ const styles = StyleSheet.create({
   },
   overlay: {
     flex: 1,
-    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
-    zIndex: 1,
+    alignItems: 'center',
   },
   title: {
     fontFamily: 'secondary',
-    fontSize: 60,
+    fontSize: 40,
     color: '#ffff00',
-    textShadowColor: '#8F351D',
-    textShadowOffset: { width: 3, height: 3 },
-    textShadowRadius: 5,
     marginBottom: 20,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: 'secondary',
+    fontSize: 24,
+    color: '#ffff00',
+    marginBottom: 40,
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -198,5 +330,36 @@ const styles = StyleSheet.create({
     fontFamily: 'secondary',
     fontSize: 20,
     color: '#ffff00',
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: '#930606',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  settingsButtonText: {
+    color: '#ffff00',
+    fontSize: 24,
+    fontFamily: 'secondary',
+  },
+  soundToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '87%',
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#191919',
+    borderRadius: 5,
+  },
+  soundToggleText: {
+    color: '#ffff00',
+    fontSize: 18,
+    fontFamily: 'secondary',
   },
 });

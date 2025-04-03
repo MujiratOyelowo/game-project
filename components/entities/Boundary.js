@@ -9,9 +9,9 @@ export default function Boundary(props) {
 
   let imageSource;
   if (props.type === 'top') {
-    imageSource = require('../../assets/img/Fireball.png');
+    // imageSource = require('../../assets/img/Fireball.png');
   } else if (props.type === 'side') {
-    imageSource = require('../../assets/img/Head.png'); // same for left and right
+    // imageSource = require('../../assets/img/Head.png');
   } else {
     // imageSource = require('../../assets/img/Head.png');
   }

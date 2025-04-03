@@ -5,7 +5,8 @@ import {
   View,
   ImageBackground,
   Image,
-  TouchableOpacity
+  TouchableOpacity,
+  Animated,
 } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
@@ -24,9 +25,238 @@ export default function MainScreen() {
   // State for the chosen player and modal visibility
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+
+  // Animation values for player 1
+  const player1Anim = new Animated.Value(0);
+  const player1Rotate = new Animated.Value(0);
+  const player1Scale = new Animated.Value(1);
+  
+  // Animation values for player 2
+  const player2Anim = new Animated.Value(0);
+  const player2Rotate = new Animated.Value(0);
+  const player2Scale = new Animated.Value(1);
+
+  // Animation values for modal player
+  const modalPlayerAnim = new Animated.Value(0);
+  const modalPlayerRotate = new Animated.Value(0);
+  const modalPlayerScale = new Animated.Value(1);
+
+  // Start animations when component mounts
+  useEffect(() => {
+    // John dancing animation
+    Animated.parallel([
+      // Up and down movement
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player1Anim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player1Anim, {
+            toValue: 0,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      // Rotation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player1Rotate, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player1Rotate, {
+            toValue: 0,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      // Scale
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player1Scale, {
+            toValue: 1.1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player1Scale, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start();
+
+    // Jane dancing animation (slightly different timing)
+    Animated.parallel([
+      // Up and down movement
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player2Anim, {
+            toValue: 1,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player2Anim, {
+            toValue: 0,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      // Rotation
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player2Rotate, {
+            toValue: 1,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player2Rotate, {
+            toValue: 0,
+            duration: 1800,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+      // Scale
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(player2Scale, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(player2Scale, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start();
+  }, []);
+
+  // Stop animations when a player is selected
+  useEffect(() => {
+    if (selectedPlayer) {
+      // Stop all animations
+      player1Anim.stopAnimation();
+      player2Anim.stopAnimation();
+      player1Rotate.stopAnimation();
+      player2Rotate.stopAnimation();
+      player1Scale.stopAnimation();
+      player2Scale.stopAnimation();
+
+      // Reset values to default
+      player1Anim.setValue(0);
+      player2Anim.setValue(0);
+      player1Rotate.setValue(0);
+      player2Rotate.setValue(0);
+      player1Scale.setValue(1);
+      player2Scale.setValue(1);
+
+      // Start animation only for selected player
+      if (selectedPlayer === 'John') {
+        Animated.parallel([
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player1Anim, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player1Anim, {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player1Rotate, {
+                toValue: 1,
+                duration: 1500,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player1Rotate, {
+                toValue: 0,
+                duration: 1500,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player1Scale, {
+                toValue: 1.1,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player1Scale, {
+                toValue: 1,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+        ]).start();
+      } else if (selectedPlayer === 'Jane') {
+        Animated.parallel([
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player2Anim, {
+                toValue: 1,
+                duration: 1200,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player2Anim, {
+                toValue: 0,
+                duration: 1200,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player2Rotate, {
+                toValue: 1,
+                duration: 1800,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player2Rotate, {
+                toValue: 0,
+                duration: 1800,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+          Animated.loop(
+            Animated.sequence([
+              Animated.timing(player2Scale, {
+                toValue: 1.1,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(player2Scale, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+              }),
+            ])
+          ),
+        ]).start();
+      }
+    }
+  }, [selectedPlayer]);
 
   useEffect(() => {
     if (fontsLoaded) {
@@ -39,7 +269,6 @@ export default function MainScreen() {
     React.useCallback(() => {
       setSelectedPlayer(null);
       setShowModal(false);
-      setShowSettingsModal(false);
       setIsLoading(false);
       setLoadingProgress(0);
     }, [])
@@ -64,6 +293,65 @@ export default function MainScreen() {
     return () => clearInterval(interval);
   }, [isLoading, selectedPlayer, navigation]);
 
+  // Start modal animation when modal is shown
+  useEffect(() => {
+    if (showModal) {
+      // Reset animation values
+      modalPlayerAnim.setValue(0);
+      modalPlayerRotate.setValue(0);
+      modalPlayerScale.setValue(1);
+
+      // Start modal player dancing animation
+      Animated.parallel([
+        // Up and down movement
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(modalPlayerAnim, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(modalPlayerAnim, {
+              toValue: 0,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+        // Rotation
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(modalPlayerRotate, {
+              toValue: 1,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(modalPlayerRotate, {
+              toValue: 0,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+        // Scale
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(modalPlayerScale, {
+              toValue: 1.1,
+              duration: 800,
+              useNativeDriver: true,
+            }),
+            Animated.timing(modalPlayerScale, {
+              toValue: 1,
+              duration: 800,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ]).start();
+    }
+  }, [showModal]);
+
   if (!fontsLoaded) return null;
 
   return (
@@ -76,43 +364,86 @@ export default function MainScreen() {
         <Text style={styles.topTitle}>WELCOME TO HELL!!</Text>
         <Text style={styles.subtitle}>We hope you get there!!</Text>
 
-        <TouchableOpacity
-          style={styles.settingsButton}
-          onPress={() => setShowSettingsModal(true)}
-        >
-          <Text style={styles.settingsButtonText}>SETTINGS ⚙️</Text>
-        </TouchableOpacity>
-
         {/* Middle Section */}
         <Text style={styles.chooseTitle}>CHOOSE YOUR WARRIOR</Text>
         <View style={styles.playerContainer}>
           <TouchableOpacity
             onPress={() => {
-              setSelectedPlayer('Player');
+              setSelectedPlayer('John');
               setShowModal(true);
             }}
           >
-            <Image
-              source={require('../../assets/img/Player.png')}
+            <Animated.View
               style={[
-                styles.playerImage,
-                selectedPlayer === 'Player' && styles.selectedPlayer
+                styles.playerImageContainer,
+                {
+                  transform: [
+                    {
+                      translateY: player1Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -15],
+                      }),
+                    },
+                    {
+                      rotate: player1Rotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['-5deg', '5deg'],
+                      }),
+                    },
+                    {
+                      scale: player1Scale,
+                    },
+                  ],
+                },
               ]}
-            />
+            >
+              <Image
+                source={require('../../assets/img/Player.png')}
+                style={[
+                  styles.playerImage,
+                  selectedPlayer === 'John' && styles.selectedPlayer,
+                ]}
+              />
+            </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
-              setSelectedPlayer('Player2');
+              setSelectedPlayer('Jane');
               setShowModal(true);
             }}
           >
-            <Image
-              source={require('../../assets/img/Player2.png')}
+            <Animated.View
               style={[
-                styles.playerImage,
-                selectedPlayer === 'Player2' && styles.selectedPlayer
+                styles.playerImageContainer,
+                {
+                  transform: [
+                    {
+                      translateY: player2Anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, -15],
+                      }),
+                    },
+                    {
+                      rotate: player2Rotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['-5deg', '5deg'],
+                      }),
+                    },
+                    {
+                      scale: player2Scale,
+                    },
+                  ],
+                },
               ]}
-            />
+            >
+              <Image
+                source={require('../../assets/img/Player2.png')}
+                style={[
+                  styles.playerImage,
+                  selectedPlayer === 'Jane' && styles.selectedPlayer,
+                ]}
+              />
+            </Animated.View>
           </TouchableOpacity>
         </View>
 
@@ -120,35 +451,45 @@ export default function MainScreen() {
         {showModal && selectedPlayer && (
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Selected Warrior</Text>
-              <Image
-                source={
-                  selectedPlayer === 'Player'
-                    ? require('../../assets/img/Player.png')
-                    : require('../../assets/img/Player2.png')
-                }
-                style={styles.modalPlayerImage}
-              />
+              <Text style={styles.modalTitle}>{selectedPlayer} Selected!</Text>
+              <Animated.View
+                style={[
+                  styles.modalPlayerContainer,
+                  {
+                    transform: [
+                      {
+                        translateY: modalPlayerAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -20],
+                        }),
+                      },
+                      {
+                        rotate: modalPlayerRotate.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['-8deg', '8deg'],
+                        }),
+                      },
+                      {
+                        scale: modalPlayerScale,
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Image
+                  source={
+                    selectedPlayer === 'John'
+                      ? require('../../assets/img/Player.png')
+                      : require('../../assets/img/Player2.png')
+                  }
+                  style={styles.modalPlayerImage}
+                />
+              </Animated.View>
               <TouchableOpacity
                 style={styles.modalCloseButton}
                 onPress={() => setShowModal(false)}
               >
                 <Text style={styles.modalCloseButtonText}>OK</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Settings Modal */}
-        {showSettingsModal && (
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Settings</Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setShowSettingsModal(false)}
-              >
-                <Text style={styles.modalCloseButtonText}>Close</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -178,10 +519,10 @@ export default function MainScreen() {
           </View>
         )}
 
-        {/* Go Back Button with arrow (at bottom center) */}
+        {/* Go Back Button */}
         <TouchableOpacity
           style={styles.backButton}
-          onPress={() => navigation.goBack()}
+          onPress={() => navigation.navigate('Welcome')}
         >
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
@@ -215,22 +556,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     textAlign: 'center',
   },
-  settingsButton: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    backgroundColor: '#930606',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderWidth: 2,
-    borderColor: '#000',
-    borderRadius: 5,
-  },
-  settingsButtonText: {
-    fontFamily: 'secondary',
-    fontSize: 24,
-    color: '#ffff00',
-  },
   chooseTitle: {
     fontFamily: 'secondary',
     fontSize: 24,
@@ -243,6 +568,10 @@ const styles = StyleSheet.create({
     marginTop: 30,
     justifyContent: 'space-around',
     width: '100%',
+  },
+  playerImageContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   playerImage: {
     width: 150,
@@ -316,6 +645,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginBottom: 10,
     color: '#ffff00',
+  },
+  modalPlayerContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
   },
   modalPlayerImage: {
     width: 200,
