@@ -18,7 +18,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function MainScreen({ route }) {
   const navigation = useNavigation();
-  const isSoundEnabled = route?.params?.isSoundEnabled ?? true; // Getting sound state from WelcomeScreen
+  const isSoundEnabled = route?.params?.isSoundEnabled ?? true; // Get sound state from WelcomeScreen
   const [fontsLoaded] = useFonts({
     secondary: require('../../assets/fonts/secondary-font.ttf'),
   });
@@ -95,7 +95,7 @@ export default function MainScreen({ route }) {
       ),
     ]).start();
 
-    // Jane dancing animation (slightly different timing from John's)
+    // Jane dancing animation (slightly different timing)
     Animated.parallel([
       // Up and down movement
       Animated.loop(

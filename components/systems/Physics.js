@@ -4,8 +4,8 @@ import { Dimensions } from 'react-native';
 const { width } = Dimensions.get('window');
 
 // Constants for player movement
-const PLAYER_SPEED = 25;
-const PLAYER_JUMP_FORCE = -10;
+const PLAYER_SPEED = 15;
+const PLAYER_JUMP_FORCE = -16;
 const MAX_HORIZONTAL_SPEED = 8;
 
 const Physics = {
@@ -89,6 +89,7 @@ const Physics = {
       }
     });
 
+    // Ensure delta is within reasonable limits
     const delta = Math.min(time.delta, 16.667);
     Matter.Engine.update(engine, delta);
     return entities;

@@ -182,7 +182,7 @@ export default function WelcomeScreen() {
               • Dodge Obstacles: Watch out for fireballs falling from above and devils' horns coming from the sides.{'\n'}
               • Controls: Use the left and right buttons to navigate.{'\n'}
               • Scoring: Earn points every second as long as you're alive.{'\n'}
-              <Text style={styles.emoji}>☠</Text> Warning: If you fall, you're sent straight to Hell!{'\n'}
+              <Text style={styles.emoji}></Text>☠ Warning: If you fall, you're sent straight to Hell!{'\n'}
               <Text style={styles.emoji}>👹</Text>Good luck—we hope you don't make it!
             </Text>
             <TouchableOpacity

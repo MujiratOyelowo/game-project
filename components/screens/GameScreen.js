@@ -27,7 +27,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function GameScreen({ route, navigation }) {
   const selectedPlayer = route?.params?.selectedPlayer || 'DefaultPlayer';
-  const isSoundEnabled = route?.params?.isSoundEnabled ?? true;
+  const isSoundEnabled = route?.params?.isSoundEnabled ?? true; // Default to true if not provided
   const [lives, setLives] = useState(10);
   const [score, setScore] = useState(0);
   const [entities, setEntities] = useState(null);
@@ -42,11 +42,13 @@ export default function GameScreen({ route, navigation }) {
   const engineRef = useRef(null);
   const gameEngineRef = useRef(null);
 
+  // Add pan responder for swipe controls
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
+        // Reset any existing movement when touch starts
         if (gameEngineRef.current) {
           gameEngineRef.current.dispatch({ type: "stop" });
         }
@@ -174,13 +176,13 @@ export default function GameScreen({ route, navigation }) {
 
   // Function to reset the game
   const resetGame = () => {
-    // Cleaning up the old physics engine
+    // Clean up the old physics engine
     if (engineRef.current) {
       Matter.World.clear(engineRef.current.world);
       Matter.Engine.clear(engineRef.current);
     }
 
-    // Resetting all state variables
+    // Reset all state variables
     setLives(10);
     setScore(0);
     setCameraOffset(0);
@@ -240,31 +242,20 @@ export default function GameScreen({ route, navigation }) {
         // Load head sound for background gameplay
         const { sound: headSound } = await Audio.Sound.createAsync(
           require('../../assets/sounds/head.wav'),
-          { 
-            isLooping: true,
-            volume: 1.0,
-            shouldPlay: true
-          }
+          { isLooping: true }
         );
         headSoundObj = headSound;
         
         if (isMounted) {
           setHeadSound(headSound);
-          // Start playing immediately if sound is enabled
           if (isSoundEnabled) {
-            try {
-              await headSound.setPositionAsync(0);
-              await headSound.playAsync();
-            } catch (playError) {
-              console.error('Error playing head sound:', playError);
-            }
+            await headSound.playAsync();
           }
         }
 
         // Load game over sound
         const { sound: gameOverSound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/gameover.wav'),
-          { volume: 1.0 }
+          require('../../assets/sounds/gameover.wav')
         );
         gameOverSoundObj = gameOverSound;
         
@@ -287,24 +278,7 @@ export default function GameScreen({ route, navigation }) {
         gameOverSoundObj.unloadAsync();
       }
     };
-  }, []); // Remove isSoundEnabled dependency to prevent reloading
-
-  // Handle sound state changes
-  useEffect(() => {
-    if (headSound) {
-      if (isSoundEnabled) {
-        headSound.setPositionAsync(0).then(() => {
-          headSound.playAsync().catch(error => {
-            console.error('Error playing head sound:', error);
-          });
-        });
-      } else {
-        headSound.pauseAsync().catch(error => {
-          console.error('Error pausing head sound:', error);
-        });
-      }
-    }
-  }, [isSoundEnabled, headSound]);
+  }, [isSoundEnabled]);
 
   // Handle sound cleanup when screen loses focus
   useFocusEffect(
@@ -322,18 +296,32 @@ export default function GameScreen({ route, navigation }) {
 
   // Check for game over and play appropriate sound
   useEffect(() => {
-    if (lives <= 0 && isSoundEnabled) {
+    if (lives <= 0 && !isGameOver) {
       if (headSound) {
         headSound.stopAsync();
       }
-      if (gameOverSound) {
-        gameOverSound.setPositionAsync(0).then(() => {
-          gameOverSound.playAsync();
-        });
+      if (gameOverSound && isSoundEnabled) {
+        gameOverSound.playAsync();
       }
       setIsGameOver(true);
+      
+      // Stop the game engine
+      if (gameEngineRef.current) {
+        gameEngineRef.current.dispatch({ type: "stop" });
+      }
     }
-  }, [lives, headSound, gameOverSound, isSoundEnabled]);
+  }, [lives, headSound, gameOverSound, isSoundEnabled, isGameOver]);
+
+  // Add effect to handle sound state changes
+  useEffect(() => {
+    if (headSound) {
+      if (isSoundEnabled) {
+        headSound.playAsync();
+      } else {
+        headSound.pauseAsync();
+      }
+    }
+  }, [isSoundEnabled, headSound]);
 
   // Initial entity creation
   useEffect(() => {
@@ -396,14 +384,14 @@ export default function GameScreen({ route, navigation }) {
     const spawnThreshold = visibleBottom + 400;
     const cleanupThreshold = cameraOffset - 800;
 
-    // Only perform cleanup if we've moved far enough
     if (cleanupThreshold > lastCleanupY) {
       const cleanedEntities = cleanupOldEntities(world, entities, cleanupThreshold);
       setLastCleanupY(cleanupThreshold);
       setEntities(cleanedEntities);
     }
+
     if (spawnThreshold > lastBoundarySpawnY) {
-      const { obstacles, lastY: newObstacleY } = spawnObstacles(world, lastBoundarySpawnY, 20);
+      const { obstacles, lastY: newObstacleY } = spawnObstacles(world, lastBoundarySpawnY, 20); // Increased spawn amount
       const { boundaries, lastY: newBoundaryY } = spawnBoundaries(world, lastBoundarySpawnY, newObstacleY + 1800);
 
       setLastBoundarySpawnY(newBoundaryY);
@@ -463,7 +451,7 @@ export default function GameScreen({ route, navigation }) {
   useEffect(() => {
     if (entities?.player1) {
       const playerY = entities.player1.body.position.y;
-      // Update score when player moves down (increases Y position)
+      // Update score when player moves down
       if (playerY > lastScoreUpdateY) {
         setScore(prevScore => prevScore + 1);
         setLastScoreUpdateY(playerY);
@@ -540,6 +528,7 @@ export default function GameScreen({ route, navigation }) {
         <View style={styles.gameOverOverlay}>
           <View style={styles.gameOverContent}>
             <Text style={styles.gameOverText}>Game Over!</Text>
+            <Text style={styles.finalScoreText}>Final Score: {score}</Text>
             <View style={styles.buttonContainer}>
               <TouchableOpacity 
                 style={styles.restartButton}
@@ -664,6 +653,12 @@ const styles = StyleSheet.create({
   },
   gameOverText: {
     fontSize: 32,
+    color: '#ffff00',
+    marginBottom: 20,
+    fontFamily: 'secondary',
+  },
+  finalScoreText: {
+    fontSize: 24,
     color: '#ffff00',
     marginBottom: 20,
     fontFamily: 'secondary',
