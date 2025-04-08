@@ -230,6 +230,7 @@ export default function GameScreen({ route, navigation }) {
               "Game Over",
               `You lost, welcome to hell! Your score: ${score}`,
               [
+                { text: "Restart Game", onPress: restartGame },
                 { text: "Return to Main Menu", onPress: () => navigation.navigate('MainScreen') }
               ]
             );
@@ -346,8 +347,9 @@ export default function GameScreen({ route, navigation }) {
         setGameOver(true);
         Alert.alert(
           "Game Over",
-          `You lost, welcome to hell! Your score: ${score}`,
+          `You fell into the abyss! Your score: ${score}`,
           [
+            { text: "Restart Game", onPress: restartGame },
             { text: "Return to Main Menu", onPress: () => navigation.navigate('MainScreen') }
           ]
         );
@@ -473,6 +475,7 @@ export default function GameScreen({ route, navigation }) {
                     "Game Over",
                     `You lost, welcome to hell! Your score: ${score}`,
                     [
+                      { text: "Restart Game", onPress: restartGame },
                       { text: "Return to Main Menu", onPress: () => navigation.navigate('MainScreen') }
                     ]
                   );
@@ -895,6 +898,119 @@ export default function GameScreen({ route, navigation }) {
     }
   };
 
+  // 首先在組件頂部，添加一個重新開始遊戲的函數
+  const restartGame = () => {
+    // 重置遊戲狀態
+    setLives(10);
+    setScore(0);
+    setGameOver(false);
+    setIsPaused(false);
+    setLastDamageTime(0);
+    
+    // 清除所有引用
+    platformsRef.current = {};
+    scrollPositionRef.current = 0;
+    lowestPlatformRef.current = 0;
+    lastScoreUpdateRef.current = Date.now();
+    lastFireballSpawnRef.current = 0;
+    fireballsRef.current = {};
+    
+    // 重新初始化遊戲引擎和實體
+    const engine = Matter.Engine.create({ 
+      enableSleeping: false
+    });
+    
+    // 設置物理世界參數
+    engine.gravity.scale = 0.01;
+    engine.gravity.y = 1;
+    
+    engineRef.current = engine;
+    
+    if (!engine) {
+      console.error('Engine creation failed!');
+      return;
+    }
+    
+    const world = engine.world;
+    
+    // 初始化平台和玩家
+    platformsRef.current = {};
+    scrollPositionRef.current = 0;
+    
+    // 創建邊界
+    const boundaries = createBoundaries(world);
+    
+    // 創建初始實體
+    const initialEntities = { 
+      physics: { engine, world },
+      ...boundaries
+    };
+    
+    // 確保第一個平台在玩家上方並且足夠寬
+    const firstPlatformY = height * 0.3;
+    const firstPlatform = createPlatform(world, width / 2, firstPlatformY);
+    const firstPlatformId = 'platform_initial';
+    platformsRef.current[firstPlatformId] = firstPlatform;
+    initialEntities[firstPlatformId] = firstPlatform;
+    
+    // 創建更多初始平台，確保四種類型都存在
+    let lastY = firstPlatformY;
+    lowestPlatformRef.current = lastY;
+    
+    // 在初始階段強制創建四種不同類型的平台
+    const forcedTypes = ['platform', 'treadmill', 'spring', 'spike'];
+    
+    // 首先確保每種類型至少存在一次
+    for (let i = 0; i < forcedTypes.length; i++) {
+      const previousY = lastY;
+      lastY += (PLATFORM_GAP_MIN + Math.random() * (PLATFORM_GAP_MAX - PLATFORM_GAP_MIN));
+      
+      if (i > 0 && lastY - previousY < 100) {
+        lastY = previousY + 100;
+      }
+      
+      let platform;
+      const x = Math.random() * (width - PLATFORM_WIDTH) + PLATFORM_WIDTH / 2;
+      
+      switch (forcedTypes[i]) {
+        case 'treadmill':
+          const direction = Math.random() < 0.5 ? -2 : 2;
+          platform = createTreadmill(world, x, lastY, direction);
+          break;
+        case 'spring':
+          platform = createSpring(world, x, lastY);
+          break;
+        case 'spike':
+          platform = createSpike(world, x, lastY);
+          break;
+        default: // 'platform'
+          platform = createPlatform(world, x, lastY);
+      }
+      
+      const platformId = `platform_${forcedTypes[i]}_${i}`;
+      platformsRef.current[platformId] = platform;
+      initialEntities[platformId] = platform;
+      lowestPlatformRef.current = lastY;
+    }
+    
+    // 創建更多隨機平台
+    for (let i = 0; i < INITIAL_PLATFORMS - forcedTypes.length; i++) {
+      lastY += (PLATFORM_GAP_MIN + Math.random() * (PLATFORM_GAP_MAX - PLATFORM_GAP_MIN));
+      const platformEntities = createRandomPlatform(world, lastY, true);
+      Object.assign(initialEntities, platformEntities);
+      lowestPlatformRef.current = lastY;
+    }
+    
+    // 在第一個平台上方創建玩家
+    const player = createPlayer(world, width / 2, firstPlatformY - 50, selectedPlayer);
+    player.body.mass = player.body.mass * 3;
+    initialEntities.player1 = player;
+
+    setEntities(initialEntities);
+    
+    console.log('Game restarted!');
+  };
+
   if (!entities) return null;
 
   return (
@@ -944,6 +1060,25 @@ export default function GameScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </GameEngine>
+      
+      {/* 遊戲結束畫面 */}
+      {gameOver && (
+        <View style={styles.gameOverContainer}>
+          <Text style={styles.gameOverText}>Game Over</Text>
+          <Text style={styles.finalScoreText}>Your Score: {score}</Text>
+          <View style={styles.gameOverButtons}>
+            <TouchableOpacity style={styles.restartButton} onPress={restartGame}>
+              <Text style={styles.buttonText}>Restart</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.menuButton}
+              onPress={() => navigation.navigate('MainScreen')}
+            >
+              <Text style={styles.buttonText}>Main Menu</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </ImageBackground>
   );
 }
@@ -1018,5 +1153,56 @@ const styles = StyleSheet.create({
   pauseButtonText: {
     fontSize: 24,
     color: '#ffff00',
+  },
+  gameOverContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  gameOverText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ff0000',
+    marginBottom: 20,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 3,
+  },
+  finalScoreText: {
+    fontSize: 24,
+    color: '#ffffff',
+    marginBottom: 30,
+  },
+  gameOverButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: 250,
+  },
+  restartButton: {
+    backgroundColor: '#008800',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#00ff00',
+  },
+  menuButton: {
+    backgroundColor: '#880000',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: '#ff0000',
+  },
+  buttonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
   },
 });
