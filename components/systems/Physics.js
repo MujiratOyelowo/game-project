@@ -4,8 +4,8 @@ import { Dimensions } from 'react-native';
 const { width } = Dimensions.get('window');
 
 // Constants for player movement
-const PLAYER_SPEED = 15;
-const PLAYER_JUMP_FORCE = -16;
+const PLAYER_SPEED = 25;
+const PLAYER_JUMP_FORCE = -10;
 const MAX_HORIZONTAL_SPEED = 8;
 
 const Physics = {
@@ -89,7 +89,6 @@ const Physics = {
       }
     });
 
-    // Ensure delta is within reasonable limits
     const delta = Math.min(time.delta, 16.667);
     Matter.Engine.update(engine, delta);
     return entities;
@@ -115,51 +114,39 @@ const Physics = {
       const obstacle = objALabel === "player" ? objB : objA;
       const obstacleLabel = objALabel === "player" ? objBLabel : objALabel;
 
-      // Calculate collision angle
-      const collisionAngle = Math.atan2(
-        player.position.y - obstacle.position.y,
-        player.position.x - obstacle.position.x
-      );
+      console.log('Collision detected:', obstacleLabel); // Debug log
 
-      // Convert angle to degrees and normalize to 0-360
-      let angle = (collisionAngle * 180) / Math.PI;
-      if (angle < 0) angle += 360;
-
-      // Only process collisions where player is landing on top (angle between 135 and 225 degrees)
-      if (angle >= 135 && angle <= 225) {
-        // Spring collision - gain 1 life (max 10)
-        if (obstacleLabel === "spring") {
+      // Process all collisions, not just top collisions
+      switch (obstacleLabel) {
+        case "spring":
           Matter.Body.setVelocity(player, { 
             x: player.velocity.x, 
             y: PLAYER_JUMP_FORCE * 2 
           });
           onLifeChange(1);
-        }
+          break;
 
-        // Spike collision - lose 2 lives
-        if (obstacleLabel === "spike") {
+        case "spike":
+          console.log('Spike collision detected'); // Debug log
           onLifeChange(-2);
-        }
+          break;
 
-        // Treadmill collision - gain 1 life and increase speed
-        if (obstacleLabel === "treadmill") {
+        case "treadmill":
           const treadmill = obstacle;
           Matter.Body.setVelocity(player, { 
             x: player.velocity.x + (treadmill.velocity.x * 1.5), 
             y: player.velocity.y 
           });
           onLifeChange(1);
-        }
+          break;
 
-        // Fireball collision - lose 3 lives
-        if (obstacleLabel === "fireball") {
+        case "fireball":
           onLifeChange(-3);
-        }
+          break;
 
-        // Head collision - lose 4 lives
-        if (obstacleLabel === "head") {
+        case "head":
           onLifeChange(-4);
-        }
+          break;
       }
     });
 

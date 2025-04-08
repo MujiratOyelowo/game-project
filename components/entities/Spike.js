@@ -8,6 +8,8 @@ const Spike = (world, x, y, options) => {
   const spikeBody = Matter.Bodies.rectangle(x, y, spikeWidth, spikeHeight, {
     isStatic: true,
     label: 'spike',
+    friction: 0.1,
+    restitution: 0.1,
     ...options,
   });
 
@@ -38,11 +40,11 @@ const SpikeRenderer = (props) => {
       }}
     >
       <Image
-        source={require('../../assets/img/Spikes.png')} // Updated image path
+        source={require('../../assets/img/Spikes.png')}
         style={{
           width: width,
           height: height,
-          resizeMode: 'contain', // Adjust as needed (contain, cover, stretch)
+          resizeMode: 'contain', 
         }}
       />
     </View>

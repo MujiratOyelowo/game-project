@@ -34,14 +34,11 @@ export default function WelcomeScreen() {
   useEffect(() => {
     async function prepare() {
       try {
-        // Pre-load fonts, make any API calls you need to do here
         await Promise.all([
-          // Add any other async tasks here
         ]);
       } catch (e) {
         console.warn(e);
       } finally {
-        // Tell the application to render
         setIsReady(true);
       }
     }
@@ -51,7 +48,6 @@ export default function WelcomeScreen() {
 
   useEffect(() => {
     if (isReady && fontsLoaded) {
-      // Hide the splash screen after everything is ready
       SplashScreen.hideAsync();
     }
   }, [isReady, fontsLoaded]);
@@ -130,7 +126,7 @@ export default function WelcomeScreen() {
     >
       {/* Overlay for the welcome screen */}
       <View style={styles.overlay}>
-        {/* Settings Button - Moved to top right */}
+        {/* Settings Button*/}
         <TouchableOpacity
           style={styles.settingsButton}
           onPress={() => setShowSettings(true)}
@@ -142,10 +138,10 @@ export default function WelcomeScreen() {
         <Text style={styles.subtitle}>We hope you get there!!</Text>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={styles.button}
+            style={styles.playButton}
             onPress={handlePlayPress}
           >
-            <Text style={styles.buttonText}>GO TO GAME</Text>
+            <Text style={styles.playButtonText}>GO TO GAME</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.button}
@@ -186,7 +182,7 @@ export default function WelcomeScreen() {
               • Dodge Obstacles: Watch out for fireballs falling from above and devils' horns coming from the sides.{'\n'}
               • Controls: Use the left and right buttons to navigate.{'\n'}
               • Scoring: Earn points every second as long as you're alive.{'\n'}
-              <Text style={styles.emoji}></Text>☠ Warning: If you fall, you're sent straight to Hell!{'\n'}
+              <Text style={styles.emoji}>☠</Text> Warning: If you fall, you're sent straight to Hell!{'\n'}
               <Text style={styles.emoji}>👹</Text>Good luck—we hope you don't make it!
             </Text>
             <TouchableOpacity
@@ -361,5 +357,20 @@ const styles = StyleSheet.create({
     color: '#ffff00',
     fontSize: 18,
     fontFamily: 'secondary',
+  },
+  playButton: {
+    backgroundColor: '#930606',
+    borderWidth: 2,
+    borderColor: '#000',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginHorizontal: 10,
+    borderRadius: 5,
+  },
+  playButtonText: {
+    fontFamily: 'secondary',
+    fontSize: 20,
+    color: '#ffff00',
+    textAlign: 'center',
   },
 });

@@ -16,8 +16,9 @@ import { BlurView } from 'expo-blur';
 // Prevent the splash screen from auto-hiding until fonts are loaded
 SplashScreen.preventAutoHideAsync();
 
-export default function MainScreen() {
+export default function MainScreen({ route }) {
   const navigation = useNavigation();
+  const isSoundEnabled = route?.params?.isSoundEnabled ?? true; // Getting sound state from WelcomeScreen
   const [fontsLoaded] = useFonts({
     secondary: require('../../assets/fonts/secondary-font.ttf'),
   });
@@ -94,7 +95,7 @@ export default function MainScreen() {
       ),
     ]).start();
 
-    // Jane dancing animation (slightly different timing)
+    // Jane dancing animation (slightly different timing from John's)
     Animated.parallel([
       // Up and down movement
       Animated.loop(
@@ -277,13 +278,16 @@ export default function MainScreen() {
   // Simulate a loading process when PLAY button is pressed
   useEffect(() => {
     let interval;
-    if (isLoading && selectedPlayer) { // Only proceed if selectedPlayer is set
+    if (isLoading && selectedPlayer) {
       interval = setInterval(() => {
         setLoadingProgress((prev) => {
           if (prev >= 100) {
             clearInterval(interval);
             console.log('Navigating to GameScreen with selectedPlayer:', selectedPlayer);
-            navigation.navigate('GameScreen', { selectedPlayer });
+            navigation.navigate('GameScreen', { 
+              selectedPlayer,
+              isSoundEnabled // Pass sound state to GameScreen
+            });
             return 100;
           }
           return prev + 10;
@@ -291,7 +295,7 @@ export default function MainScreen() {
       }, 100);
     }
     return () => clearInterval(interval);
-  }, [isLoading, selectedPlayer, navigation]);
+  }, [isLoading, selectedPlayer, navigation, isSoundEnabled]);
 
   // Start modal animation when modal is shown
   useEffect(() => {

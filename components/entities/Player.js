@@ -58,7 +58,7 @@ const PlayerRenderer = (props, selectedPlayer) => {
         style={{
           width: width,
           height: height,
-          resizeMode: 'contain', // Adjust as needed (contain, cover, stretch)
+          resizeMode: 'contain',
         }}
       />
     </View>

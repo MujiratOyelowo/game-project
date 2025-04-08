@@ -27,7 +27,7 @@ const { width, height } = Dimensions.get('window');
 
 export default function GameScreen({ route, navigation }) {
   const selectedPlayer = route?.params?.selectedPlayer || 'DefaultPlayer';
-  const isSoundEnabled = route?.params?.isSoundEnabled ?? true; // Default to true if not provided
+  const isSoundEnabled = route?.params?.isSoundEnabled ?? true;
   const [lives, setLives] = useState(10);
   const [score, setScore] = useState(0);
   const [entities, setEntities] = useState(null);
@@ -42,13 +42,11 @@ export default function GameScreen({ route, navigation }) {
   const engineRef = useRef(null);
   const gameEngineRef = useRef(null);
 
-  // Add pan responder for swipe controls
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
-        // Reset any existing movement when touch starts
         if (gameEngineRef.current) {
           gameEngineRef.current.dispatch({ type: "stop" });
         }
@@ -176,13 +174,13 @@ export default function GameScreen({ route, navigation }) {
 
   // Function to reset the game
   const resetGame = () => {
-    // Clean up the old physics engine
+    // Cleaning up the old physics engine
     if (engineRef.current) {
       Matter.World.clear(engineRef.current.world);
       Matter.Engine.clear(engineRef.current);
     }
 
-    // Reset all state variables
+    // Resetting all state variables
     setLives(10);
     setScore(0);
     setCameraOffset(0);
@@ -242,20 +240,31 @@ export default function GameScreen({ route, navigation }) {
         // Load head sound for background gameplay
         const { sound: headSound } = await Audio.Sound.createAsync(
           require('../../assets/sounds/head.wav'),
-          { isLooping: true }
+          { 
+            isLooping: true,
+            volume: 1.0,
+            shouldPlay: true
+          }
         );
         headSoundObj = headSound;
         
         if (isMounted) {
           setHeadSound(headSound);
+          // Start playing immediately if sound is enabled
           if (isSoundEnabled) {
-            await headSound.playAsync();
+            try {
+              await headSound.setPositionAsync(0);
+              await headSound.playAsync();
+            } catch (playError) {
+              console.error('Error playing head sound:', playError);
+            }
           }
         }
 
         // Load game over sound
         const { sound: gameOverSound } = await Audio.Sound.createAsync(
-          require('../../assets/sounds/gameover.wav')
+          require('../../assets/sounds/gameover.wav'),
+          { volume: 1.0 }
         );
         gameOverSoundObj = gameOverSound;
         
@@ -278,7 +287,24 @@ export default function GameScreen({ route, navigation }) {
         gameOverSoundObj.unloadAsync();
       }
     };
-  }, [isSoundEnabled]);
+  }, []); // Remove isSoundEnabled dependency to prevent reloading
+
+  // Handle sound state changes
+  useEffect(() => {
+    if (headSound) {
+      if (isSoundEnabled) {
+        headSound.setPositionAsync(0).then(() => {
+          headSound.playAsync().catch(error => {
+            console.error('Error playing head sound:', error);
+          });
+        });
+      } else {
+        headSound.pauseAsync().catch(error => {
+          console.error('Error pausing head sound:', error);
+        });
+      }
+    }
+  }, [isSoundEnabled, headSound]);
 
   // Handle sound cleanup when screen loses focus
   useFocusEffect(
@@ -301,7 +327,9 @@ export default function GameScreen({ route, navigation }) {
         headSound.stopAsync();
       }
       if (gameOverSound) {
-        gameOverSound.playAsync();
+        gameOverSound.setPositionAsync(0).then(() => {
+          gameOverSound.playAsync();
+        });
       }
       setIsGameOver(true);
     }
@@ -374,16 +402,14 @@ export default function GameScreen({ route, navigation }) {
       setLastCleanupY(cleanupThreshold);
       setEntities(cleanedEntities);
     }
-
-    // Only spawn new entities if we've moved far enough
     if (spawnThreshold > lastBoundarySpawnY) {
-      const { obstacles, lastY: newObstacleY } = spawnObstacles(world, lastBoundarySpawnY, 20); // Increased spawn amount
+      const { obstacles, lastY: newObstacleY } = spawnObstacles(world, lastBoundarySpawnY, 20);
       const { boundaries, lastY: newBoundaryY } = spawnBoundaries(world, lastBoundarySpawnY, newObstacleY + 1800);
 
       setLastBoundarySpawnY(newBoundaryY);
       setEntities(prev => ({ ...prev, ...obstacles, ...boundaries }));
     }
-  }, [cameraOffset]); // Only depend on cameraOffset to prevent infinite loop
+  }, [cameraOffset]);
 
   // Setup collision handler
   useEffect(() => {
@@ -465,7 +491,6 @@ export default function GameScreen({ route, navigation }) {
       style={styles.background}
       {...panResponder.panHandlers}
     >
-      {/* Fixed boundaries that don't move with the camera */}
       <View style={styles.fixedBoundaries}>
         <GameEngine 
           style={styles.gameContainer}
